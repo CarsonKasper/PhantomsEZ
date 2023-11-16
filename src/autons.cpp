@@ -243,7 +243,17 @@ void interfered_example() {
  chassis.wait_drive();
 }
 
+void defensive(){
 
+};
+
+void offensive(){
+
+};
+
+void skills(){
+
+}
 
 // . . .
 // Make your own autonomous functions here!

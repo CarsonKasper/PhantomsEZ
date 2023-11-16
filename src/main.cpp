@@ -1,5 +1,14 @@
 #include "main.h"
 
+using namespace pros;
+
+Controller master(E_CONTROLLER_MASTER);
+Motor rightCatapult(10, E_MOTOR_GEAR_RED, true);
+Motor leftCatapult(9, E_MOTOR_GEAR_RED);
+Motor_Group cataGroup({rightCatapult, leftCatapult});
+Rotation rotationSensor(2,true);
+ADIDigitalOut SolenoidR('A');
+ADIDigitalOut SolenoidL('B');
 
 /////
 // For instalattion, upgrading, documentations and tutorials, check out website!
@@ -11,11 +20,11 @@
 Drive chassis (
   // Left Chassis Ports (negative port will reverse it!)
   //   the first port is the sensored port (when trackers are not used!)
-  {6, 4, 8}
+  {-6, -4, -8}
 
   // Right Chassis Ports (negative port will reverse it!)
   //   the first port is the sensored port (when trackers are not used!)
-  ,{-5, -3, -7}
+  ,{5, 3, 7}
 
   // IMU Port
   ,21
@@ -24,26 +33,22 @@ Drive chassis (
   //    (or tracking wheel diameter)
   ,3.25
 
-  // Cartridge RPM
-  //   (or tick per rotation if using tracking wheels)
+  //   tick per rotation for tracking wheels)
   ,360
 
-  // External Gear Ratio (MUST BE DECIMAL)
-  //    (or gear ratio of tracking wheel)
-  // eg. if your drive is 84:36 where the 36t is powered, your RATIO would be 2.333.
-  // eg. if your drive is 36:60 where the 60t is powered, your RATIO would be 0.6.
-  ,1
+  // gear ratio of tracking wheel)
+  ,1.66666667
 
   // Uncomment if using tracking wheels
-  /*
+  
   // Left Tracking Wheel Ports (negative port will reverse it!)
   // ,{1, 2} // 3 wire encoder
-  // ,8 // Rotation sensor
+  ,1 // Rotation sensor
 
   // Right Tracking Wheel Ports (negative port will reverse it!)
   // ,{-3, -4} // 3 wire encoder
   // ,-9 // Rotation sensor
-  */
+  
 
   // Uncomment if tracking wheels are plugged into a 3 wire expander
   // 3 Wire Port Expander Smart Port
@@ -66,8 +71,8 @@ void initialize() {
 
   // Configure your chassis controls
   chassis.toggle_modify_curve_with_controller(true); // Enables modifying the controller curve with buttons on the joysticks
-  chassis.set_active_brake(0); // Sets the active brake kP. We recommend 0.1.
-  chassis.set_curve_default(0, 0); // Defaults for curve. If using tank, only the first parameter is used. (Comment this line out if you have an SD card!)  
+  chassis.set_active_brake(0.1); // Sets the active brake kP. We recommend 0.1.
+  chassis.set_curve_default(1, 1); // Defaults for curve. If using tank, only the first parameter is used. (Comment this line out if you have an SD card!)  
   default_constants(); // Set the drive to your own constants from autons.cpp!
   exit_condition_defaults(); // Set the exit conditions to your own constants from autons.cpp!
 
@@ -77,21 +82,107 @@ void initialize() {
 
   // Autonomous Selector using LLEMU
   ez::as::auton_selector.add_autons({
-    Auton("Example Drive\n\nDrive forward and come back.", drive_example),
-    Auton("Example Turn\n\nTurn 3 times.", turn_example),
-    Auton("Drive and Turn\n\nDrive forward, turn, come back. ", drive_and_turn),
-    Auton("Drive and Turn\n\nSlow down during drive.", wait_until_change_speed),
-    Auton("Swing Example\n\nSwing, drive, swing.", swing_example),
-    Auton("Combine all 3 movements", combining_movements),
-    Auton("Interference\n\nAfter driving forward, robot performs differently if interfered or not.", interfered_example),
+    Auton("Offensive", offensive),
+    Auton("Defensive", defensive),
+    Auton("Skills", skills),
+    // Auton("Example Drive\n\nDrive forward and come back.", ),
+    // Auton("Example Drive\n\nDrive forward and come back.", drive_example),
+    // Auton("Example Turn\n\nTurn 3 times.", turn_example),
+    // Auton("Drive and Turn\n\nDrive forward, turn, come back. ", drive_and_turn),
+    // Auton("Drive and Turn\n\nSlow down during drive.", wait_until_change_speed),
+    // Auton("Swing Example\n\nSwing, drive, swing.", swing_example),
+    // Auton("Combine all 3 movements", combining_movements),
+    // Auton("Interference\n\nAfter driving forward, robot performs differently if interfered or not.", interfered_example),
   });
 
   // Initialize chassis and auton selector
   chassis.initialize();
   ez::as::initialize();
+
+  SolenoidL.set_value(LOW);
+	SolenoidR.set_value(HIGH);
+	cataGroup.set_brake_modes(MOTOR_BRAKE_HOLD);
+	cataGroup.set_encoder_units(MOTOR_ENCODER_DEGREES);
 }
 
+void rotationalCata() {
+	while (true)
+	{
+		while ((rotationSensor.get_angle() < 7700) || (rotationSensor.get_angle() > 8500))
+		{
+			cataGroup.move(127);
+		}
+		cataGroup.move(0);
+		cataGroup.brake();
+		if (master.get_digital(E_CONTROLLER_DIGITAL_R2))
+		{
+			int motorP = rightCatapult.get_position();
+			int fireM = 20;
+			int grace = 5;
+			cataGroup.move_relative(fireM, 100);
+			while ((rightCatapult.get_position() < motorP + fireM - grace) || (rightCatapult.get_position() > motorP + fireM + grace)){
+				delay(5);
+			}
+			delay(100);
+		}	
+	}
+}
 
+void wingControl(){
+	int OCINT = 0;
+	while (true)
+	{
+		if (master.get_digital(E_CONTROLLER_DIGITAL_L2) == 1)
+		{
+			if(OCINT == 0)
+			{
+				SolenoidL.set_value(HIGH);
+				SolenoidR.set_value(LOW);
+				OCINT = 1;
+				delay(500);
+			}
+			else
+			{
+				SolenoidL.set_value(LOW);
+				SolenoidR.set_value(HIGH);
+				OCINT = 0;
+				delay(500);
+			}
+			
+		}
+		if (master.get_digital(E_CONTROLLER_DIGITAL_L1) == 1)
+		{
+			if(OCINT == 0)
+			{
+				SolenoidL.set_value(HIGH);
+				OCINT = 1;
+				delay(500);
+			}
+			else
+			{
+				SolenoidL.set_value(LOW);
+				OCINT = 0;
+				delay(500);
+			}
+		}
+		if (master.get_digital(E_CONTROLLER_DIGITAL_R1) == 1)
+		{
+			if(OCINT == 0)
+			{
+				SolenoidR.set_value(LOW);
+				OCINT = 1;
+				delay(500);
+			}
+			else
+			{
+				SolenoidR.set_value(HIGH);
+				OCINT = 0;
+				delay(500);
+			}
+			
+		}
+	}
+}
 
 /**
  * Runs while the robot is in the disabled state of Field Management System or
@@ -157,18 +248,19 @@ void autonomous() {
 void opcontrol() {
   // This is preference to what you like to drive on.
   chassis.set_drive_brake(MOTOR_BRAKE_COAST);
-
+  SolenoidL.set_value(LOW);
+	SolenoidR.set_value(HIGH);
+	Task fireCatapult(rotationalCata);
+	Task MannageWings(wingControl);
   while (true) {
 
-    chassis.tank(); // Tank control
-    // chassis.arcade_standard(ez::SPLIT); // Standard split arcade
+    // chassis.tank(); // Tank control
+    chassis.arcade_standard(ez::SPLIT); // Standard split arcade
     // chassis.arcade_standard(ez::SINGLE); // Standard single arcade
     // chassis.arcade_flipped(ez::SPLIT); // Flipped split arcade
     // chassis.arcade_flipped(ez::SINGLE); // Flipped single arcade
 
-    // . . .
-    // Put more user control code here!
-    // . . .
+
 
     pros::delay(ez::util::DELAY_TIME); // This is used for timer calculations!  Keep this ez::util::DELAY_TIME
   }
