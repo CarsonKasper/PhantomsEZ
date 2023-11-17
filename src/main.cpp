@@ -27,7 +27,7 @@ Drive chassis (
   ,{5, 3, 7}
 
   // IMU Port
-  ,21
+  ,20
 
   // Wheel Diameter (Remember, 4" wheels are actually 4.125!)
   //    (or tracking wheel diameter)
@@ -99,7 +99,7 @@ void initialize() {
   chassis.initialize();
   ez::as::initialize();
 
-  SolenoidL.set_value(LOW);
+  	SolenoidL.set_value(LOW);
 	SolenoidR.set_value(HIGH);
 	cataGroup.set_brake_modes(MOTOR_BRAKE_HOLD);
 	cataGroup.set_encoder_units(MOTOR_ENCODER_DEGREES);

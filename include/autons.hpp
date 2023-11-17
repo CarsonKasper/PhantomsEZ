@@ -3,6 +3,10 @@
 #include "EZ-Template/drive/drive.hpp"
 
 extern Drive chassis;
+extern ADIDigitalOut SolenoidR;
+extern ADIDigitalOut SolenoidL;
+extern Motor_Group cataGroup;
+extern Rotation rotationSensor;
 
 void drive_example();
 void turn_example();

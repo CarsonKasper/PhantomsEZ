@@ -1,6 +1,5 @@
 #include "main.h"
 
-
 /////
 // For instalattion, upgrading, documentations and tutorials, check out website!
 // https://ez-robotics.github.io/EZ-Template/
@@ -248,6 +247,34 @@ void defensive(){
 };
 
 void offensive(){
+  chassis.set_turn_pid(25, 80);
+  chassis.wait_drive();
+  chassis.set_drive_pid(29, 100, true);
+  chassis.wait_drive();
+  chassis.set_turn_pid(0, 70);
+  chassis.wait_drive();
+  SolenoidR.set_value('LOW');
+  chassis.set_drive_pid(-19, 100, false);
+  chassis.wait_drive();
+  chassis.set_turn_pid(45, 70);
+  chassis.wait_drive();
+  chassis.set_drive_pid(-10, 100, true);
+  chassis.wait_drive();
+  chassis.set_turn_pid(90, 70);
+  chassis.wait_drive();
+  chassis.set_drive_pid(-10, 100, true);
+  chassis.wait_drive();
+  chassis.set_turn_pid(0, 70);
+  chassis.wait_drive();
+  SolenoidR.set_value('HIGH');
+  chassis.set_drive_pid(24, 100, true);
+  chassis.wait_drive();
+  chassis.set_turn_pid(270, 70);
+  chassis.wait_drive();
+  SolenoidL.set_value('HIGH');
+  chassis.set_drive_pid(24, 100, true);
+  chassis.wait_drive();
+  chassis.set_turn_pid(10, 50);
 
 };
 
